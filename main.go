@@ -13,6 +13,17 @@ func makeMask(filename string, bootdata []byte) error {
 		return fmt.Errorf("could not open ROM: %v", err)
 	}
 	defer f.Close()
+	st, err := f.Stat()
+	if err != nil {
+		return err
+	}
+	const minSize = checksumStart + checksumLength
+	if st.Size() < minSize {
+		fmt.Fprintf(os.Stderr, "Padding to %d bytes\n", minSize)
+		if err := f.Truncate(minSize); err != nil {
+			return err
+		}
+	}
 	_, err = f.WriteAt(bootdata, 0x40)
 	if err != nil {
 		return fmt.Errorf("could not write: %v", err)
